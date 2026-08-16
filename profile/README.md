@@ -2,7 +2,7 @@
 
 Forlæns helps organizations build digital products that are accessible, durable and useful to everyone.
 
-[Website](https://forlaens.com/) · [LinkedIn](https://www.linkedin.com/company/forl%C3%A6ns/)
+[Website](https://forlaens.com/) · [LinkedIn](https://www.linkedin.com/company/forlaens-com/)
 
 ## Open source
 
