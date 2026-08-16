@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem in a Forlæns project
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping improve the project. Do not include secrets or security vulnerabilities here.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Select …
+        3. Observe …
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, operating system, extension or application version, as relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility impact
+      description: Describe any accessibility barrier or affected users, if applicable.
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add screenshots or other useful context. Remove private information first.
