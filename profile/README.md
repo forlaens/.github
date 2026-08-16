@@ -16,6 +16,8 @@ A browser extension for visualising accessibility issues directly on a webpage. 
 
 A focused tool for checking WCAG 2.x colour contrast combinations in an image.
 
+[Use Color Contrast](https://colorcontrast.forlaens.com/)
+
 ## What we work on
 
 - Digital accessibility, WCAG and the European Accessibility Act
