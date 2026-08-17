@@ -21,8 +21,7 @@ A focused tool for checking WCAG 2.x colour contrast combinations in an image.
 ## What we work on
 
 - Digital accessibility, WCAG and the European Accessibility Act
-- Accessible frontend development and quality assurance
-- Training, reviews and practical guidance
+- Accessible frontend development
 - Open source tools that make accessibility easier to understand
 
 For collaboration or questions, contact [tobias@forlaens.com](mailto:tobias@forlaens.com).
