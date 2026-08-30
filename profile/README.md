@@ -1,8 +1,8 @@
 # Forlæns
 
-Forlæns helps organizations build digital products that are accessible, durable and useful to everyone.
+Forlæns shares knowledge, tools and practical guidance for building digital products that are accessible, durable and useful to everyone.
 
-[Website](https://forlaens.com/) · [LinkedIn](https://www.linkedin.com/company/forlaens-com/)
+[Website](https://forlaens.com/) · [LinkedIn](https://www.linkedin.com/in/tobias-nyhuus/) · [Facebook](https://www.facebook.com/profile.php?id=61594102043483) · [Instagram](https://www.instagram.com/forlaensagency/)
 
 ## Open source
 
