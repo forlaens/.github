@@ -6,7 +6,7 @@ Forlæns shares knowledge, tools and practical guidance for building digital pro
 
 ## Behind Forlæns
 
-Forlæns is founded and run by Tobias Nyhuus Jensen. Follow [Forlæns on LinkedIn](https://www.linkedin.com/company/forlaens-com/) or connect with [Tobias Nyhuus Jensen on LinkedIn](https://www.linkedin.com/in/tobias-nyhuus/).
+Forlæns is founded and run by accessibility expert Tobias Nyhuus Jensen. Connect with [Tobias Nyhuus Jensen on LinkedIn](https://www.linkedin.com/in/tobias-nyhuus/).
 
 ## Open source
 
