@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Copenhagen",
+  "dependencyDashboard": true,
+  "dependencyDashboardApproval": false,
+  "automerge": false,
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 5
+}
