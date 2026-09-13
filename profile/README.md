@@ -1,8 +1,8 @@
 # Forlæns
 
-Forlæns shares knowledge, tools and practical guidance for building digital products that are accessible, durable and useful to everyone.
+Forlæns shares knowledge, tools, and practical guidance for building digital products that are accessible, durable, and useful to everyone.
 
-[Website](https://forlaens.com/) · [Forlæns on LinkedIn](https://www.linkedin.com/company/forlaens-com/) · [Facebook](https://www.facebook.com/forlaensagency/) · [Instagram](https://www.instagram.com/forlaensagency/)
+[Website](https://forlaens.com/) · [Forlæns on LinkedIn](https://www.linkedin.com/company/forlaensagency/) · [Facebook](https://www.facebook.com/forlaensagency/) · [Instagram](https://www.instagram.com/forlaensagency/)
 
 ## Behind Forlæns
 
@@ -26,6 +26,6 @@ A focused tool for checking WCAG 2.x colour contrast combinations in an image.
 
 - Digital accessibility, WCAG and the European Accessibility Act
 - Accessible frontend development
-- Open source tools that make accessibility easier to understand
+- Open-source tools that make accessibility easier to understand
 
 For collaboration or questions, contact [tobias@forlaens.com](mailto:tobias@forlaens.com).
