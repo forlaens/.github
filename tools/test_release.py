@@ -62,6 +62,24 @@ class ValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.validate()
 
+    def test_deployment_validates_recorded_pr_without_a_commit_search_index(self):
+        checkout = 'a' * 40
+        deployment = 'b' * 40
+        self.commit['sha'] = checkout
+        self.evidence.update(checkout_sha=checkout, pull_request_number=2)
+        self.run['pull_requests'] = []
+        pr = {'number': 2, 'merged': True, 'merge_commit_sha': deployment,
+              'head': {'sha': 'head', 'repo': {'full_name': 'forlaens/example'}}, 'base': {'ref': 'main'}}
+        responses = {'repos/forlaens/example/actions/runs/1': self.run,
+                     'repos/forlaens/example/pulls/2': pr,
+                     f'repos/forlaens/example/git/commits/{checkout}': self.commit}
+        with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'forlaens/example'}), \
+             patch.object(release, 'api', side_effect=lambda path: responses[path]), \
+             patch.object(release, 'read_evidence', return_value=self.evidence), \
+             patch.object(release, 'paginated', return_value=self.jobs) as pages:
+            self.assertEqual(release.checked_tree('repos/forlaens/example', 1, 'ci.yml', ['Browser tests'], deployment), 'tree')
+        pages.assert_called_once_with('repos/forlaens/example/actions/runs/1/attempts/2/jobs', 'jobs')
+
 
 class ReleaseFlowTest(unittest.TestCase):
     def setUp(self):
@@ -134,9 +152,41 @@ class ReleaseFlowTest(unittest.TestCase):
             self.flow('changed')
 
     def test_old_main_validation_cannot_authorize_new_commit(self):
-        with patch.object(release, 'api', return_value={'event': 'push', 'head_sha': 'old'}):
+        with patch.object(release, 'api', return_value={'event': 'push', 'head_sha': 'old'}), \
+             patch.object(release, 'read_evidence', return_value={}):
             with self.assertRaisesRegex(ValueError, 'another main revision'):
                 release.checked_tree('repos/forlaens/example', 1, 'ci.yml', [], self.sha)
+
+    def test_recorded_pr_survives_empty_github_association_index(self):
+        self.run['pull_requests'] = []
+        with patch.object(release, 'api', return_value=self.pr), \
+             patch.object(release, 'paginated', side_effect=AssertionError('Must not use the delayed search index')):
+            self.assertEqual(release.validation_pull_request('repos/forlaens/example', self.run, 2), self.pr)
+
+    def test_recorded_pr_still_requires_exact_revision_repository_and_target(self):
+        for field, value in [('sha', 'another-head'), ('repo', {'full_name': 'someone/fork'})]:
+            wrong = copy.deepcopy(self.pr)
+            wrong['head'][field] = value
+            with self.subTest(field=field), patch.object(release, 'api', return_value=wrong):
+                with self.assertRaises(ValueError):
+                    release.validation_pull_request('repos/forlaens/example', self.run, 2)
+        wrong = copy.deepcopy(self.pr)
+        wrong['base']['ref'] = 'other-branch'
+        with patch.object(release, 'api', return_value=wrong), self.assertRaises(ValueError):
+            release.validation_pull_request('repos/forlaens/example', self.run, 2)
+        for number in [True, '2', 0, -1]:
+            with self.subTest(number=number), self.assertRaises(ValueError):
+                release.validation_pull_request('repos/forlaens/example', self.run, number)
+
+    def test_record_saves_the_event_pull_request_number(self):
+        self.env.update(RELEASE_MODE='record', GITHUB_RUN_ID='1', GITHUB_RUN_ATTEMPT='1',
+                        GITHUB_EVENT_NAME='pull_request', RUNNER_TEMP=self.directory.name)
+        self.event.write_text(json.dumps({'pull_request': {'number': 2}}))
+        with patch.dict(os.environ, self.env), patch.object(release, 'command', return_value=self.sha), \
+             patch.object(release, 'output'):
+            release.main()
+        evidence = json.loads((Path(self.directory.name) / 'validation.json').read_text())
+        self.assertEqual(evidence['pull_request_number'], 2)
 
 
 if __name__ == "__main__":
