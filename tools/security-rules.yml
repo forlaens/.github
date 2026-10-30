@@ -1,0 +1,24 @@
+rules:
+  - id: browser-dom-text-as-html
+    message: Keep DOM text and URL input as text; use textContent or a reviewed HTML sanitizer.
+    languages: [javascript, typescript]
+    severity: ERROR
+    mode: taint
+    pattern-sources:
+      - pattern: $ELEMENT.textContent
+      - pattern: $ELEMENT.innerText
+      - pattern: location.hash
+      - pattern: location.search
+      - pattern: window.location.hash
+      - pattern: window.location.search
+      - pattern: document.URL
+    pattern-sanitizers:
+      - pattern: DOMPurify.sanitize(...)
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: $ELEMENT.innerHTML = $DATA
+              - pattern: $ELEMENT.outerHTML = $DATA
+              - pattern: $ELEMENT.insertAdjacentHTML($WHERE, $DATA)
+          - focus-metavariable: $DATA
+      - pattern: document.write(...)

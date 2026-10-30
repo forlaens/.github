@@ -1,0 +1,21 @@
+name: Shared tooling
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: shared-tooling-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check release safeguards and secret detection
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
+      - name: Check shared tooling
+        run: python3 tools/security.py

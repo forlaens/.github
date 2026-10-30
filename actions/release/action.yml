@@ -1,0 +1,38 @@
+name: Validated release
+description: Reuse successful CI only for an identical Git tree and prevent duplicate releases.
+inputs:
+  mode:
+    description: record, orchestrate, verify, or mark
+    required: true
+  workflow:
+    description: Validation workflow filename
+    required: true
+  required-jobs:
+    description: JSON array of jobs that must actually succeed
+    required: true
+  sha:
+    description: Full main commit SHA for deployment
+    required: false
+  validation-run-id:
+    description: Successful validation run ID
+    required: false
+outputs:
+  evidence:
+    description: Path to the validation JSON
+    value: ${{ steps.release.outputs.evidence }}
+  deploy:
+    description: Whether this validated revision still needs deployment
+    value: ${{ steps.release.outputs.deploy }}
+runs:
+  using: composite
+  steps:
+    - id: release
+      shell: bash
+      env:
+        RELEASE_ACTION_PATH: ${{ github.action_path }}
+        RELEASE_MODE: ${{ inputs.mode }}
+        VALIDATION_WORKFLOW: ${{ inputs.workflow }}
+        REQUIRED_JOBS: ${{ inputs.required-jobs }}
+        DEPLOY_SHA: ${{ inputs.sha }}
+        VALIDATION_RUN_ID: ${{ inputs.validation-run-id }}
+      run: python3 "$RELEASE_ACTION_PATH/../../tools/release.py"
