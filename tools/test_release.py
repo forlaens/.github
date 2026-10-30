@@ -62,6 +62,24 @@ class ValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.validate()
 
+    def test_deployment_validates_recorded_pr_without_a_commit_search_index(self):
+        checkout = 'a' * 40
+        deployment = 'b' * 40
+        self.commit['sha'] = checkout
+        self.evidence.update(checkout_sha=checkout, pull_request_number=2)
+        self.run['pull_requests'] = []
+        pr = {'number': 2, 'merged': True, 'merge_commit_sha': deployment,
+              'head': {'sha': 'head', 'repo': {'full_name': 'forlaens/example'}}, 'base': {'ref': 'main'}}
+        responses = {'repos/forlaens/example/actions/runs/1': self.run,
+                     'repos/forlaens/example/pulls/2': pr,
+                     f'repos/forlaens/example/git/commits/{checkout}': self.commit}
+        with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'forlaens/example'}), \
+             patch.object(release, 'api', side_effect=lambda path: responses[path]), \
+             patch.object(release, 'read_evidence', return_value=self.evidence), \
+             patch.object(release, 'paginated', return_value=self.jobs) as pages:
+            self.assertEqual(release.checked_tree('repos/forlaens/example', 1, 'ci.yml', ['Browser tests'], deployment), 'tree')
+        pages.assert_called_once_with('repos/forlaens/example/actions/runs/1/attempts/2/jobs', 'jobs')
+
 
 class ReleaseFlowTest(unittest.TestCase):
     def setUp(self):
