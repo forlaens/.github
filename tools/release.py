@@ -75,16 +75,30 @@ def read_evidence(root, run):
         return json.loads(archive.read("validation.json"))
 
 
+def validation_pull_request(root, run):
+    """GitHub may omit pull_requests on runs after their branch is deleted."""
+    pulls = run.get("pull_requests", [])
+    if not pulls:
+        pulls = paginated(f"{root}/commits/{run['head_sha']}/pulls", None)
+    matching = []
+    for candidate in pulls:
+        pr = api(f"{root}/pulls/{candidate['number']}")
+        if (pr["head"]["sha"] == run["head_sha"]
+                and pr["head"].get("repo", {}).get("full_name") == root.removeprefix("repos/")
+                and pr["base"]["ref"] == "main"):
+            matching.append(pr)
+    if len(matching) != 1:
+        raise ValueError("Expected one pull request for the validated revision")
+    return matching[0]
+
+
 def checked_tree(root, run_id, workflow, required_jobs, deployment_sha=None):
     if not str(run_id).isdigit():
         raise ValueError("Invalid validation run ID")
     run = api(f"{root}/actions/runs/{run_id}")
     if deployment_sha:
         if run.get("event") == "pull_request":
-            pulls = run.get("pull_requests", [])
-            if len(pulls) != 1:
-                raise ValueError("Missing deployment pull request")
-            pr = api(f"{root}/pulls/{pulls[0]['number']}")
+            pr = validation_pull_request(root, run)
             if not pr.get("merged") or pr.get("merge_commit_sha") != deployment_sha or pr["head"]["sha"] != run["head_sha"]:
                 raise ValueError("Validation belongs to another release")
         elif run.get("head_sha") != deployment_sha:
@@ -134,11 +148,8 @@ def main():
         if run["conclusion"] != "success" or run.get("head_repository", {}).get("full_name") != repository:
             return
         if run["event"] == "pull_request":
-            pulls = run.get("pull_requests", [])
-            if len(pulls) != 1:
-                raise ValueError("Expected one validated pull request")
-            number = pulls[0]["number"]
-            pr = api(f"{root}/pulls/{number}")
+            pr = validation_pull_request(root, run)
+            number = pr["number"]
             if pr["state"] != "open" or pr["draft"] or pr["head"]["sha"] != run["head_sha"]:
                 return
             if pr["head"]["repo"]["full_name"] != repository or pr["base"]["ref"] != "main":
