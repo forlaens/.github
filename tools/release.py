@@ -75,9 +75,11 @@ def read_evidence(root, run):
         return json.loads(archive.read("validation.json"))
 
 
-def validation_pull_request(root, run):
+def validation_pull_request(root, run, recorded_number=None):
     """GitHub may omit pull_requests on runs after their branch is deleted."""
-    pulls = run.get("pull_requests", [])
+    if recorded_number is not None and (type(recorded_number) is not int or recorded_number <= 0):
+        raise ValueError("Invalid recorded pull request number")
+    pulls = [{"number": recorded_number}] if recorded_number else run.get("pull_requests", [])
     if not pulls:
         pulls = paginated(f"{root}/commits/{run['head_sha']}/pulls", None)
     matching = []
@@ -96,14 +98,16 @@ def checked_tree(root, run_id, workflow, required_jobs, deployment_sha=None):
     if not str(run_id).isdigit():
         raise ValueError("Invalid validation run ID")
     run = api(f"{root}/actions/runs/{run_id}")
+    evidence = read_evidence(root, run)
     if deployment_sha:
         if run.get("event") == "pull_request":
-            pr = validation_pull_request(root, run)
+            # The evidence records the PR before merge. GitHub's commit-to-PR
+            # search index can temporarily be empty immediately after merging.
+            pr = validation_pull_request(root, run, evidence.get("pull_request_number"))
             if not pr.get("merged") or pr.get("merge_commit_sha") != deployment_sha or pr["head"]["sha"] != run["head_sha"]:
                 raise ValueError("Validation belongs to another release")
         elif run.get("head_sha") != deployment_sha:
             raise ValueError("Validation belongs to another main revision")
-    evidence = read_evidence(root, run)
     sha = evidence.get("checkout_sha", "")
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("Invalid tested commit SHA")
@@ -138,6 +142,9 @@ def main():
                     "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"], "event": os.environ["GITHUB_EVENT_NAME"],
                     "checkout_sha": command("git", "rev-parse", "HEAD"),
                     "tree": command("git", "rev-parse", "HEAD^{tree}")}
+        if os.environ["GITHUB_EVENT_NAME"] == "pull_request":
+            event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+            evidence["pull_request_number"] = event["pull_request"]["number"]
         path = Path(os.environ["RUNNER_TEMP"]) / "validation.json"
         path.write_text(json.dumps(evidence))
         output("evidence", path)
