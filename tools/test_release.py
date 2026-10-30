@@ -72,7 +72,7 @@ class ReleaseFlowTest(unittest.TestCase):
         self.run = {'id': 1, 'event': 'pull_request', 'conclusion': 'success',
                     'head_repository': {'full_name': 'forlaens/example'},
                     'head_sha': 'head', 'pull_requests': [{'number': 2}]}
-        self.pr = {'state': 'open', 'draft': False, 'merged': True,
+        self.pr = {'number': 2, 'state': 'open', 'draft': False, 'merged': True,
                    'head': {'sha': 'head', 'repo': {'full_name': 'forlaens/example'}},
                    'base': {'ref': 'main'}, 'merge_commit_sha': self.sha}
         self.env = {'RELEASE_MODE': 'orchestrate', 'GITHUB_REPOSITORY': 'forlaens/example',
@@ -105,7 +105,23 @@ class ReleaseFlowTest(unittest.TestCase):
 
     def test_obsolete_pr_does_not_dispatch(self):
         self.pr['head']['sha'] = 'new-head'
-        self.assertEqual(self.flow()[0], [])
+        with self.assertRaises(ValueError):
+            self.flow()
+
+    def test_missing_run_pull_requests_uses_commit_association(self):
+        self.run['pull_requests'] = []
+        with patch.object(release, 'paginated', return_value=[{'number': 2}]) as lookup:
+            calls, _ = self.flow()
+        self.assertEqual(len(calls), 1)
+        self.assertIn('/deploy.yml/dispatches', calls[0].args[0])
+        lookup.assert_called_once_with('repos/forlaens/example/commits/head/pulls', None)
+
+    def test_missing_or_ambiguous_association_cannot_release(self):
+        self.run['pull_requests'] = []
+        for candidates in [[], [{'number': 2}, {'number': 3}]]:
+            with self.subTest(candidates=candidates), patch.object(release, 'paginated', return_value=candidates):
+                with self.assertRaises(ValueError):
+                    self.flow()
 
     def test_duplicate_success_does_not_dispatch_or_deploy(self):
         self.assertEqual(self.flow(deployed=True)[0], [])
