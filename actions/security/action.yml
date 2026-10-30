@@ -1,0 +1,18 @@
+name: License-free security checks
+description: Run pinned local security tools without a paid service or uploaded results.
+inputs:
+  base:
+    description: Base commit for scanning every incoming commit for secrets
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Run security checks
+      shell: bash
+      env:
+        SECURITY_ACTION_PATH: ${{ github.action_path }}
+        SECURITY_BASE: ${{ inputs.base }}
+      run: |
+        args=()
+        if [[ -n "$SECURITY_BASE" ]]; then args+=(--base "$SECURITY_BASE"); fi
+        python3 "$SECURITY_ACTION_PATH/../../tools/security.py" "${args[@]}"

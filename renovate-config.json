@@ -8,5 +8,33 @@
   "dependencyDashboardApproval": false,
   "automerge": false,
   "prHourlyLimit": 2,
-  "prConcurrentLimit": 5
+  "prConcurrentLimit": 1,
+  "schedule": [
+    "* 0-5 * * 1"
+  ],
+  "rebaseWhen": "auto",
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "groupName": "{{manager}} compatible updates"
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": [],
+    "dependencyDashboardApproval": false,
+    "prCreation": "immediate",
+    "prConcurrentLimit": 0
+  }
 }
