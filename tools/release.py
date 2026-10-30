@@ -75,10 +75,20 @@ def read_evidence(root, run):
         return json.loads(archive.read("validation.json"))
 
 
-def checked_tree(root, run_id, workflow, required_jobs):
+def checked_tree(root, run_id, workflow, required_jobs, deployment_sha=None):
     if not str(run_id).isdigit():
         raise ValueError("Invalid validation run ID")
     run = api(f"{root}/actions/runs/{run_id}")
+    if deployment_sha:
+        if run.get("event") == "pull_request":
+            pulls = run.get("pull_requests", [])
+            if len(pulls) != 1:
+                raise ValueError("Missing deployment pull request")
+            pr = api(f"{root}/pulls/{pulls[0]['number']}")
+            if not pr.get("merged") or pr.get("merge_commit_sha") != deployment_sha or pr["head"]["sha"] != run["head_sha"]:
+                raise ValueError("Validation belongs to another release")
+        elif run.get("head_sha") != deployment_sha:
+            raise ValueError("Validation belongs to another main revision")
     evidence = read_evidence(root, run)
     sha = evidence.get("checkout_sha", "")
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
@@ -143,7 +153,7 @@ def main():
         if main_commit["sha"] != sha or already_deployed(root, sha):
             return
         try:
-            tree = checked_tree(root, run["id"], workflow, required)
+            tree = checked_tree(root, run["id"], workflow, required, sha)
             if tree != main_commit["tree"]["sha"]:
                 raise ValueError("Main changed after validation")
         except (ValueError, subprocess.CalledProcessError) as error:
@@ -165,7 +175,7 @@ def main():
         main_commit = current_main(root)
         if main_commit["sha"] != sha or command("git", "rev-parse", "HEAD") != sha:
             raise ValueError("Deployment must be the current main revision")
-        tree = checked_tree(root, os.environ["VALIDATION_RUN_ID"], workflow, required)
+        tree = checked_tree(root, os.environ["VALIDATION_RUN_ID"], workflow, required, sha)
         if tree != main_commit["tree"]["sha"]:
             raise ValueError("Deployment tree differs from validated tree")
         output("deploy", "false" if already_deployed(root, sha) else "true")
