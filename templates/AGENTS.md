@@ -1,0 +1,22 @@
+# Repository instructions
+
+These cost-control rules apply to this Forlæns-owned repository. Before the first ready PR, add this project's verified setup, focused-test and full-validation commands above the policy. Read the actual package scripts, test configuration and workflows; do not invent commands. Preserve any existing project-specific instructions when adopting this template.
+
+## Local development and GitHub Actions costs
+
+- Run the actual test, lint, static-analysis, security and browser tools locally. Use focused checks while iterating and complete the required local validation of changed surfaces before opening a ready PR. An AI review supplements execution evidence.
+- Finish development locally and batch related corrections before pushing. Use a draft PR when deliberately unfinished work needs sharing; enable the final cloud validation when it becomes ready. Do not use repeated pushes, ready/draft toggles or blind reruns as the normal debugging loop.
+- On a CI failure, inspect the failing job and its evidence, reproduce and fix locally, then run the affected checks before one corrective push. Rerun a failed job only when there is evidence of a transient infrastructure failure. Report unavailable local dependencies and remaining verification gaps; preserve the required cloud checks.
+- Match checks to the change. Review documentation-only edits, run `git diff --check` and the local secret scan. Product, dependency, test and workflow changes must retain their applicable functional, browser, database and accessibility coverage. Preserve established stronger project requirements.
+- Keep one independent final cloud validation of the finished revision. Avoid identical full push and PR suites. Changes after validation require new relevant validation; a green result for older code is insufficient. Do not use `skip ci`, disable required checks or bypass local hooks to make a release pass.
+- Reuse PR validation for deployment only after verifying the successful required jobs, repository, PR, tested Git tree and current release branch. Use the same checks for manual releases, prevent duplicate deployments of a commit and run full validation when evidence is missing or mismatched. Never introduce a runner that only waits on another run.
+- Cancel obsolete PR runs and set a suitable timeout on every job. Make dependent CI job conditions cancellation-aware; reserve `always()` for short cleanup or evidence steps. Keep active production deployments serialized and protected from cancellation.
+- Use pinned free security tools and local pre-push secret scanning. Redact findings and never upload code or secrets to a new scanning service without authorization. Preserve free public-repository protections. Never automatically enable paid security, AI add-ons or trials.
+- Keep the organization's Actions hard stop at USD 50/month and other paid-overage budgets at zero. Never raise a budget automatically or weaken a required check when the budget blocks a run. Report that block. These are organization budgets, not an allowance for each repository.
+- Use short daily and post-release production checks and a weekly full audit where applicable. Preserve mail/backup checks and existing release evidence. Keep ordinary test artifacts for 7 days on success and 14 on failure, and weekly production evidence for 30 days. Preserve backups and release SBOM retention.
+- Use the official Renovate GitHub App and shared Forlæns configuration. Group ordinary updates in the weekly Monday window before 06:00 Europe/Copenhagen, allow one ordinary PR at a time, require dashboard approval for majors and deliver vulnerability fixes immediately. Preserve meaningful existing groups.
+- When changing CI costs, compare runner job-seconds per successful release at equivalent coverage. Separate scheduled checks, cancelled/failed work and migration runs; fewer releases alone are not evidence of a technical saving.
+
+AGENTS.md directs agents. Required status checks, workflow guards and account budgets provide technical enforcement; do not claim this file alone prevents other users or tools from running Actions. This file must be committed in the target repository; the organization's `.github` repository is not automatically inherited as AGENTS.md.
+
+Source: Tobias' approved cost-control plan, 2026-10-30, and explicit instructions for current and future repositories, 2026-10-31. Scope: Forlæns-owned repositories. Refresh on an explicit policy change or verified changes in billing, workflow behavior or instruction discovery.
