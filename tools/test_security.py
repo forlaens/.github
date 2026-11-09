@@ -34,11 +34,17 @@ class BinaryDownloadTest(unittest.TestCase):
                 patch.object(security.platform, "machine", return_value="x86_64"), \
                 patch.object(security.urllib.request, "urlopen") as download:
             gateway_error = HTTPError(url, 504, "Gateway Timeout", None, None)
-            download.side_effect = [gateway_error, io.BytesIO(data)]
+            release = b'{"assets":[{"name":"other.tar.gz","id":2},{"name":"tool_1.0_linux.tar.gz","id":3}]}'
+            download.side_effect = [gateway_error, io.BytesIO(release), io.BytesIO(data)]
             self.assertEqual(security.binary("tool").read_bytes(), payload)
-            self.assertEqual(download.call_args_list, [
-                call(url, timeout=60), call(f"{url}?download=1", timeout=60),
+            self.assertEqual(download.call_args_list[:2], [
+                call(url, timeout=60),
+                call("https://api.github.com/repos/example/tool/releases/tags/v1.0", timeout=60),
             ])
+            self.assertEqual(download.call_count, 3)
+            request = download.call_args.args[0]
+            self.assertEqual(request.full_url, "https://api.github.com/repos/example/tool/releases/assets/3")
+            self.assertEqual(request.get_header("Accept"), "application/octet-stream")
 
 
 class SecretsTest(unittest.TestCase):
