@@ -10,6 +10,7 @@ import platform
 import subprocess
 import sys
 import tarfile
+import urllib.error
 import urllib.request
 
 CACHE = Path(os.environ.get("FORLAENS_TOOLS_CACHE", str(Path.home() / ".cache/forlaens-security")))
@@ -40,8 +41,24 @@ def binary(name):
     target = CACHE / f"{name}-{version}" / name
     if not target.exists():
         suffix, checksum = platforms[f"{platform.system()}-{platform.machine()}"]
-        url = f"https://github.com/{repo}/releases/download/v{version}/{name}_{version}_{suffix}.tar.gz"
-        data = urllib.request.urlopen(url, timeout=60).read()
+        filename = f"{name}_{version}_{suffix}.tar.gz"
+        url = f"https://github.com/{repo}/releases/download/v{version}/{filename}"
+        try:
+            data = urllib.request.urlopen(url, timeout=60).read()
+        except urllib.error.HTTPError as error:
+            if error.code not in (502, 503, 504):
+                raise
+            releases = f"https://api.github.com/repos/{repo}/releases"
+            with urllib.request.urlopen(f"{releases}/tags/v{version}", timeout=60) as response:
+                release = json.load(response)
+            asset_id = next((asset["id"] for asset in release["assets"] if asset["name"] == filename), None)
+            if not isinstance(asset_id, int):
+                raise RuntimeError(f"Missing release asset {filename}") from error
+            request = urllib.request.Request(
+                f"{releases}/assets/{asset_id}",
+                headers={"Accept": "application/octet-stream"},
+            )
+            data = urllib.request.urlopen(request, timeout=60).read()
         if hashlib.sha256(data).hexdigest() != checksum:
             raise RuntimeError(f"Invalid checksum for {name}")
         with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
